@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Qur'an Session | Interactive Presentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- مكتبة احتفالات الكونفيتي (Confetti) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+        }
+
+        body {
+            background-color: #cbef63; /* خلفية الصفحة الخارجية */
+            min-height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        /* كارت العرض التقديمي الرئيسي يملأ الشاشة */
+        .presentation-card {
+            width: 96vw;
+            height: 93vh;
+            max-width: 1600px;
+            max-height: 1000px;
+            background: #fafcf8;
+            border-radius: 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* الشريط العلوي */
+        .top-bar {
+            padding: 30px 45px 15px 45px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .badge-star {
+            background: #fef3d6;
+            color: #d97706;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 12px;
+        }
+
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .dot.active {
+            width: 40px;
+            border-radius: 16px;
+            background-color: #10b981;
+        }
+
+        /* محتوى الشرائح والانتقالات */
+        .slides-container {
+            flex: 1;
+            position: relative;
+            padding: 10px 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            width: calc(100% - 100px);
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(100px) scale(0.95);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .slide.exit-left {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-100px) scale(0.95);
+        }
+
+        .category-tag {
+            background-color: #fce7f3;
+            color: #ec4899;
+            padding: 8px 22px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+        }
+
+        .slide-title {
+            color: #1e293b;
+            font-size: 3.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .slide-subtitle {
+            color: #64748b;
+            font-size: 1.55rem;
+            max-width: 850px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .slide-img {
+            max-width: 500px;
+            max-height: 330px;
+            border-radius: 25px;
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .slide-img:hover {
+            transform: scale(1.03);
+        }
+
+        /* قائمة النقاط للشريحتين 2 و 4 */
+        .points-box {
+            background: #ffffff;
+            border: 2px solid #f1f5f9;
+            border-radius: 25px;
+            padding: 30px 45px;
+            width: 100%;
+            max-width: 850px;
+            text-align: left;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.03);
+        }
+
+        .points-box li {
+            list-style: none;
+            font-size: 1.5rem;
+            color: #334155;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .points-box li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* بطاقات التحدي التفاعلي (الشريحة 5) */
+        .cards-wrapper {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 850px;
+        }
+
+        .interactive-card {
+            flex: 1;
+            background: #f1f5f9;
+            border: 3px solid #e2e8f0;
+            border-radius: 25px;
+            padding: 35px 25px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .interactive-card:hover {
+            transform: translateY(-6px);
+            border-color: #cbd5e1;
+        }
+
+        .interactive-card .icon {
+            font-size: 3.5rem;
+        }
+
+        .interactive-card .card-text {
+            font-weight: 700;
+            color: #334155;
+            font-size: 1.45rem;
+        }
+
+        /* الحالة المحددة لخيار التجويد */
+        .interactive-card.selected-correct {
+            background: #10b981;
+            border-color: #10b981;
+            transform: scale(1.04);
+        }
+
+        .interactive-card.selected-correct .card-text {
+            color: #ffffff;
+        }
+
+        /* صندوق النتيجة المشجع */
+        .feedback-box {
+            background: #d1fae5;
+            border: 2px solid #a7f3d0;
+            color: #065f46;
+            padding: 22px 35px;
+            border-radius: 22px;
+            font-weight: 600;
+            font-size: 1.4rem;
+            width: 100%;
+            max-width: 850px;
+            display: none;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* الشريط السفلي للتنقل */
+        .bottom-bar {
+            padding: 25px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .btn-prev {
+            background: #e2e8f0;
+            color: #94a3b8;
+            border: none;
+            padding: 16px 38px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            cursor: not-allowed;
+            transition: all 0.2s;
+        }
+
+        .btn-prev.enabled {
+            background: #f1f5f9;
+            color: #475569;
+            cursor: pointer;
+        }
+
+        .btn-prev.enabled:hover {
+            background: #e2e8f0;
+        }
+
+        .slide-number {
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 1.35rem;
+        }
+
+        .btn-next {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 16px 42px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-next:hover {
+            transform: translateY(-3px);
+            background: #d97706;
+            box-shadow: 0 8px 22px rgba(245, 158, 11, 0.45);
+        }
+
+        .down-arrow-btn {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            color: #475569;
+            font-weight: bold;
+            font-size: 1.3rem;
+            transition: transform 0.2s ease;
+        }
+
+        .down-arrow-btn:hover {
+            transform: scale(1.1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-card">
+        
+        <!-- Header -->
+        <div class="top-bar">
+            <div class="badge-star">
+                ♡ Our Qur'an Session ♡
+            </div>
+            <div class="progress-dots" id="dotsContainer">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+
+        <!-- Slides Area -->
+        <div class="slides-container">
+            
+            <!-- Slide 1 -->
+            <div class="slide active">
+                <div class="category-tag">Welcome Hero! 🌟</div>
+                <h1 class="slide-title">Welcome to Your Qur'an Journey!</h1>
+                <p class="slide-subtitle">I am so excited to be with you today! We have a great adventure to discover Allah's words together.</p>
+                <img src="https://img.magnific.com/premium-vector/muslim-child-holding-book_1302918-2582.jpg" class="slide-img" alt="Child reading Qur'an">
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide">
+                <div class="category-tag">Part 1</div>
+                <h1 class="slide-title">Why Do We Study the Qur'an?</h1>
+                <p class="slide-subtitle">Let's discover the amazing blessings of reading Allah's holy words!</p>
+                <div class="points-box">
+                    <ul>
+                        <li>✨ <b>Allah's Love Letter:</b> It guides us to be happy and kind.</li>
+                        <li>💯 <b>Hasanat Counter:</b> Every letter earns you 10 rewards!</li>
+                        <li>🕊️ <b>Peace in Your Heart:</b> Brings calm and happiness inside.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="slide">
+                <div class="category-tag">Special Honor 👑</div>
+                <h1 class="slide-title">A Crown of Light in Jannah!</h1>
+                <p class="slide-subtitle">When you learn and read the Qur'an, Allah gifts your Mom & Dad a glowing crown brighter than the sun!</p>
+                <img src="145305.jpg" class="slide-img" alt="Glowing Golden Crown">
+            </div>
+
+            <!-- Slide 4 -->
+            <div class="slide">
+                <div class="category-tag">Part 2</div>
+                <h1 class="slide-title">Why Do We Learn Tajweed?</h1>
+                <p class="slide-subtitle">Tajweed is like dressing up our recitation in beautiful, elegant clothes!</p>
+                <div class="points-box">
+                    <ul>
+                        <li>📖 <b>Recite Like Prophet Muhammad ﷺ:</b> Read with perfect rules.</li>
+                        <li>🛡️ <b>Protecting the Meaning:</b> Keeping Allah's words accurate.</li>
+                        <li>🎶 <b>Beautifying Your Voice:</b> Makes your recitation peaceful to listen to.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 5 -->
+            <div class="slide">
+                <div class="category-tag">INTERACTIVE CHALLENGE 🎧</div>
+                <h1 class="slide-title">Speedy Reader vs. Beautiful Reciter!</h1>
+                <p class="slide-subtitle">Listen closely as I recite Surah Al-Ikhlas! Which style touched your heart more?</p>
+                
+                <div class="cards-wrapper">
+                    <div class="interactive-card" onclick="selectOption('fast')">
+                        <div class="icon">🚀</div>
+                        <div class="card-text">Super Fast (No Tajweed)</div>
+                    </div>
+                    <div class="interactive-card" id="calmCard" onclick="selectOption('correct')">
+                        <div class="icon">📿</div>
+                        <div class="card-text">Calm & Beautified (Tajweed)</div>
+                    </div>
+                </div>
+
+                <div class="feedback-box" id="feedbackBox">
+                    ☀️ <b>Excellent Choice!</b> Tajweed brings light, order, and calm to our hearts!
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="bottom-bar">
+            <button class="btn-prev" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+            
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span class="slide-number" id="slideNum">1 / 5</span>
+                <div class="down-arrow-btn" onclick="changeSlide(1)">↓</div>
+            </div>
+
+            <button class="btn-next" id="nextBtn" onclick="handleNextClick()">Next ➔</button>
+        </div>
+
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const slideNum = document.getElementById('slideNum');
+        const feedbackBox = document.getElementById('feedbackBox');
+        const calmCard = document.getElementById('calmCard');
+
+        function updateSlide(direction = 1) {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'exit-left');
+                dots[index].classList.remove('active');
+                
+                if (index < currentSlide) {
+                    slide.classList.add('exit-left');
+                }
+            });
+
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+            slideNum.textContent = `${currentSlide + 1} / ${slides.length}`;
+
+            // تحديث حالة زر Previous
+            if (currentSlide === 0) {
+                prevBtn.classList.remove('enabled');
+            } else {
+                prevBtn.classList.add('enabled');
+            }
+
+            // تحديث نص زر Next
+            if (currentSlide === slides.length - 1) {
+                nextBtn.innerHTML = 'Finish 🎉';
+            } else {
+                nextBtn.innerHTML = 'Next ➔';
+            }
+        }
+
+        function changeSlide(dir) {
+            const nextIndex = currentSlide + dir;
+            if (nextIndex >= 0 && nextIndex < slides.length) {
+                currentSlide = nextIndex;
+                updateSlide(dir);
+            }
+        }
+
+        function handleNextClick() {
+            if (currentSlide === slides.length - 1) {
+                triggerCelebration();
+            } else {
+                changeSlide(1);
+            }
+        }
+
+        function selectOption(type) {
+            if (type === 'correct') {
+                calmCard.classList.add('selected-correct');
+                feedbackBox.style.display = 'block';
+                triggerCelebration();
+            }
+        }
+
+        // تأثير الألعاب النارية والاحتفالات الجبارة (Confetti Explosion)
+        function triggerCelebration() {
+            confetti({
+                particleCount: 140,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
+
+            setTimeout(() => {
+                confetti({
+                    particleCount: 70,
+                    angle: 60,
+                    spread: 60,
+                    origin: { x: 0 }
+                });
+                confetti({
+                    particleCount: 70,
+                    angle: 120,
+                    spread: 60,
+                    origin: { x: 1 }
+                });
+            }, 250);
+        }
+
+        // التحكم بالأسهم
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && currentSlide < slides.length - 1) changeSlide(1);
+            if (e.key === 'ArrowLeft' && currentSlide > 0) changeSlide(-1);
+        });
+    </script>
+</body>
+</html>
